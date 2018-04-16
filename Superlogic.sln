@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2017
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Superlogic", "Superlogic.csproj", "{70D2765F-47E9-E5E5-F31A-B20C76F1EC7F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Superlogic.Editor", "Superlogic.Editor.csproj", "{7729D649-7935-F267-116A-D68C75E642F9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{70D2765F-47E9-E5E5-F31A-B20C76F1EC7F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{70D2765F-47E9-E5E5-F31A-B20C76F1EC7F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{70D2765F-47E9-E5E5-F31A-B20C76F1EC7F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{70D2765F-47E9-E5E5-F31A-B20C76F1EC7F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7729D649-7935-F267-116A-D68C75E642F9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7729D649-7935-F267-116A-D68C75E642F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7729D649-7935-F267-116A-D68C75E642F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7729D649-7935-F267-116A-D68C75E642F9}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
