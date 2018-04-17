@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections;
-
+using System.Collections.Generic;
 using Rnd = UnityEngine.Random;
 
 namespace Superlogic
@@ -30,6 +30,14 @@ namespace Superlogic
                 }
             }
             return list;
+        }
+
+        public static T PickRandomAndRemove<T>(this List<T> list)
+        {
+            var ix = Rnd.Range(0, list.Count);
+            var t = list[ix];
+            list.RemoveAt(ix);
+            return t;
         }
     }
 }
