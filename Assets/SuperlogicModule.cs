@@ -232,6 +232,9 @@ public class SuperlogicModule : MonoBehaviour
 
     KMSelectable[] ProcessTwitchCommand(string command)
     {
+        if (_isSolved)
+            return null;
+
         command = command.ToLowerInvariant();
         if (command.Length == 1 && command[0] >= 'a' && command[0] <= ('a' + _numVariables - 1))
             return new[] { Buttons[command[0] - 'a'] };
@@ -239,7 +242,7 @@ public class SuperlogicModule : MonoBehaviour
         if (command == "s" || command == "submit")
             return new[] { SubmitButton };
 
-        var m = Regex.Match(command, string.Format(@"^\s*s(ubmit)?(\s+[tf]){0}{1}{2}\s*$", "{", _numVariables, "}"), RegexOptions.IgnoreCase);
+        var m = Regex.Match(command, string.Format(@"^\s*s(ubmit)?((\s+[tf]){0}{1}{2})\s*$", "{", _numVariables, "}"), RegexOptions.IgnoreCase);
         if (!m.Success)
             return null;
 
