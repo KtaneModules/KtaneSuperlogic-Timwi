@@ -21,7 +21,7 @@ public class SuperlogicModule : MonoBehaviour
     public GameObject Container;
     public Material[] Greens;
     public Material[] Reds;
-    public GameObject TmplText;
+    public GameObject[] TmplTexts;
     public GameObject[] TmplButtons;
     public Mesh ButtonTrue;
     public Mesh ButtonFalse;
@@ -29,6 +29,7 @@ public class SuperlogicModule : MonoBehaviour
     private static int _moduleIdCounter = 1;
     private int _moduleId;
 
+    private int _numVariables;
     private List<GameObject>[] _unselectableButtons;
     private int _solution;
     private bool[] _selected;
@@ -52,15 +53,27 @@ public class SuperlogicModule : MonoBehaviour
         { '¬', 0.05f }
     };
 
-    const int numVariables = 4;
+    void Awake()
+    {
+        _numVariables = Rnd.Range(3, 5);
+        TwitchHelpMessage = string.Format(
+            @"“!{{0}} {1}” to toggle a button, “!{{0}} submit” to press the submit button, or “!{{0}} submit {0}” to submit a full answer (must specify exactly {2} values; t=true and f=false).",
+            string.Join(" ", Enumerable.Range(0, _numVariables).Select(i => Rnd.Range(0, 2) == 0 ? "t" : "f").ToArray()), (char) ('A' + Rnd.Range(0, _numVariables)), _numVariables);
+    }
 
     void Start()
     {
         _moduleId = _moduleIdCounter++;
 
-        _selected = new bool[numVariables];
-        _unselectableButtons = new List<GameObject>[numVariables];
-        for (int i = 0; i < numVariables; i++)
+        for (int i = _numVariables; i < 4; i++)
+        {
+            Buttons[i].gameObject.SetActive(false);
+            TmplTexts[i].SetActive(false);
+        }
+
+        _selected = new bool[_numVariables];
+        _unselectableButtons = new List<GameObject>[_numVariables];
+        for (int i = 0; i < _numVariables; i++)
         {
             _selected[i] = Rnd.Range(0, 2) == 0;
             _unselectableButtons[i] = new List<GameObject>();
@@ -68,13 +81,13 @@ public class SuperlogicModule : MonoBehaviour
 
         tryAgain:
         var expressions = new List<Expression>();
-        for (int var = 0; var < numVariables; var++)
-            expressions.Add(generateRandomExpression(Enumerable.Range(0, numVariables).Where(v => v != var)));
+        for (int var = 0; var < _numVariables; var++)
+            expressions.Add(generateRandomExpression(Enumerable.Range(0, _numVariables).Where(v => v != var)));
 
         var solutions = new List<int>();
-        for (int vals = 0; vals < 1 << numVariables; vals++)
+        for (int vals = 0; vals < 1 << _numVariables; vals++)
         {
-            for (int var = 0; var < numVariables; var++)
+            for (int var = 0; var < _numVariables; var++)
                 if (((vals & (1 << var)) != 0) != expressions[var].Evaluate(vals))
                     goto invalid;
             solutions.Add(vals);
@@ -86,14 +99,15 @@ public class SuperlogicModule : MonoBehaviour
         _solution = solutions[0];
 
         Debug.LogFormat("[Superlogic #{0}] Equations:", _moduleId);
-        for (int v = 0; v < numVariables; v++)
+        var maxAdvance = 0f;
+        for (int v = 0; v < _numVariables; v++)
         {
             const float yAdvance = -0.07f;
             Debug.LogFormat("[Superlogic #{0}] {1} = {2}", _moduleId, (char) ('A' + v), expressions[v]);
-            expressions[v].Instantiate(0.115f, false, (ch, x) =>
+            maxAdvance = Mathf.Max(maxAdvance, expressions[v].Instantiate(0.115f, false, (ch, x) =>
             {
                 var isTxt = _advance.ContainsKey(ch);
-                var template = isTxt ? TmplText : TmplButtons[0];
+                var template = isTxt ? TmplTexts[0] : TmplButtons[0];
                 var obj = Instantiate(template);
                 obj.transform.parent = template.transform.parent;
                 obj.transform.localScale = template.transform.localScale;
@@ -104,12 +118,13 @@ public class SuperlogicModule : MonoBehaviour
                 else
                     _unselectableButtons[ch - 'A'].Add(obj);
                 return isTxt ? _advance[ch] : _advance['\0'];
-            });
+            }));
             Buttons[v].OnInteract = MakeButtonHandler(v);
         }
+        maxAdvance += _advance['='] + _advance['\0'];
 
         Debug.LogFormat("[Superlogic #{0}] Solution:", _moduleId);
-        for (int v = 0; v < numVariables; v++)
+        for (int v = 0; v < _numVariables; v++)
             Debug.LogFormat("[Superlogic #{0}] {1} = {2}", _moduleId, (char) ('A' + v), (_solution & (1 << v)) != 0);
 
         SubmitButton.OnInteract += SubmitButtonHandler;
@@ -117,10 +132,18 @@ public class SuperlogicModule : MonoBehaviour
         foreach (var btn in TmplButtons)
             Destroy(btn);
         SetTextures();
+
+        var scale = Mathf.Min((_numVariables == 3 ? .5f : .47f), (_numVariables == 3 ? .15f : .1625f) / maxAdvance);
+        Container.transform.localScale = new Vector3(scale, scale, scale);
+        Container.transform.localPosition = new Vector3(_numVariables == 3 ? -.075f : -.08f, .01501f, _numVariables == 3 ? .02f : .03f);
     }
 
     private bool SubmitButtonHandler()
     {
+        SubmitButton.AddInteractionPunch();
+        if (_isSolved)
+            return false;
+
         Debug.LogFormat("[Superlogic #{0}] Submitted:", _moduleId);
         var allCorrect = true;
         for (int v = 0; v < _selected.Length; v++)
@@ -131,6 +154,7 @@ public class SuperlogicModule : MonoBehaviour
         }
         if (allCorrect)
         {
+            Audio.PlaySoundAtTransform("Plipplop", SubmitButton.transform);
             Debug.LogFormat("[Superlogic #{0}] Module solved.", _moduleId);
             Module.HandlePass();
             _isSolved = true;
@@ -148,8 +172,10 @@ public class SuperlogicModule : MonoBehaviour
     {
         return delegate
         {
+            Buttons[v].AddInteractionPunch();
             if (!_isSolved)
             {
+                Audio.PlaySoundAtTransform(_selected[v] ? "Plop" : "Plip", Buttons[v].transform);
                 _selected[v] = !_selected[v];
                 SetTextures();
             }
@@ -176,51 +202,50 @@ public class SuperlogicModule : MonoBehaviour
     private Expression generateRandomExpression(IEnumerable<int> variables)
     {
         var expressions = variables.Select(x => (Expression) new VariableExpression(x)).ToList().Shuffle();
-        if (Rnd.Range(0, 10) == 0)
+        while (expressions.Count > 2)
             expressions.RemoveAt(0);
 
-        var notted = false;
+        var notted = 0;
+        const int maxNotted = 1;
         while (expressions.Count > 1)
         {
             var l = expressions.PickRandomAndRemove();
             var r = expressions.PickRandomAndRemove();
-            if (!notted && Rnd.Range(0, 3) == 0)
+            if (notted < maxNotted && Rnd.Range(0, 3) == 0)
             {
                 l = new NotExpression(l);
-                notted = true;
+                notted++;
             }
-            if (!notted && Rnd.Range(0, 3) == 0)
+            if (notted < maxNotted && Rnd.Range(0, 3) == 0)
             {
                 r = new NotExpression(r);
-                notted = true;
+                notted++;
             }
             expressions.Add(new BinaryOperatorExpression(l, r, (BinaryOperator) Rnd.Range(0, (int) BinaryOperator.NumOperators)));
         }
-        return !notted && Rnd.Range(0, 3) == 0 ? new NotExpression(expressions[0]) : expressions[0];
+        return notted < maxNotted && Rnd.Range(0, 3) == 0 ? new NotExpression(expressions[0]) : expressions[0];
     }
 
 #pragma warning disable 414
-    private string TwitchHelpMessage = string.Format(
-        @"“!{{0}} A” to toggle a button, “!{{0}} submit” to press the submit button, or “!{{0}} submit {1}” to submit a full answer (must specify exactly four values; t=true and f=false).",
-        string.Join(" ", Enumerable.Range(0, numVariables).Select(i => Rnd.Range(0, 2) == 0 ? "t" : "f").ToArray()));
+    private string TwitchHelpMessage;
 #pragma warning restore 414
 
     KMSelectable[] ProcessTwitchCommand(string command)
     {
         command = command.ToLowerInvariant();
-        if (command.Length == 1 && command[0] >= 'a' && command[0] <= ('a' + numVariables - 1))
+        if (command.Length == 1 && command[0] >= 'a' && command[0] <= ('a' + _numVariables - 1))
             return new[] { Buttons[command[0] - 'a'] };
 
         if (command == "s" || command == "submit")
             return new[] { SubmitButton };
 
-        var m = Regex.Match(command, string.Format(@"^\s*s(ubmit)?(\s+[tf]){0}{1}{2}\s*$", "{", numVariables, "}"), RegexOptions.IgnoreCase);
+        var m = Regex.Match(command, string.Format(@"^\s*s(ubmit)?(\s+[tf]){0}{1}{2}\s*$", "{", _numVariables, "}"), RegexOptions.IgnoreCase);
         if (!m.Success)
             return null;
 
         var values = m.Groups[2].Value.Where(ch => "tfTF".Contains(ch)).Select(v => v == 't' || v == 'T').ToArray();
-        if (values.Length != numVariables)
+        if (values.Length != _numVariables)
             return null;
-        return Enumerable.Range(0, numVariables).Where(ix => values[ix] != _selected[ix]).Select(ix => Buttons[ix]).Concat(new[] { SubmitButton }).ToArray();
+        return Enumerable.Range(0, _numVariables).Where(ix => values[ix] != _selected[ix]).Select(ix => Buttons[ix]).Concat(new[] { SubmitButton }).ToArray();
     }
 }
