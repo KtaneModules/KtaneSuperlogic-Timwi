@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2017
+# Visual Studio 15
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Superlogic", "Superlogic.csproj", "{70D2765F-47E9-E5E5-F31A-B20C76F1EC7F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Superlogic.Editor", "Superlogic.Editor.csproj", "{7729D649-7935-F267-116A-D68C75E642F9}"

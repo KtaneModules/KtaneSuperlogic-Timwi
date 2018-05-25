@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -53,17 +54,11 @@ public class SuperlogicModule : MonoBehaviour
         { '¬', 0.05f }
     };
 
-    void Awake()
-    {
-        _numVariables = Rnd.Range(3, 5);
-        TwitchHelpMessage = string.Format(
-            @"“!{{0}} {1}” to toggle a button, “!{{0}} submit” to press the submit button, or “!{{0}} submit {0}” to submit a full answer (must specify exactly {2} values; t=true and f=false).",
-            string.Join(" ", Enumerable.Range(0, _numVariables).Select(i => Rnd.Range(0, 2) == 0 ? "t" : "f").ToArray()), (char) ('A' + Rnd.Range(0, _numVariables)), _numVariables);
-    }
-
     void Start()
     {
         _moduleId = _moduleIdCounter++;
+        _numVariables = 3;// Rnd.Range(3, 5);
+        Container.transform.Find("Submit-fake").gameObject.SetActive(false);
 
         for (int i = _numVariables; i < 4; i++)
         {
@@ -227,7 +222,7 @@ public class SuperlogicModule : MonoBehaviour
     }
 
 #pragma warning disable 414
-    private string TwitchHelpMessage;
+    private readonly string TwitchHelpMessage = @"Submit an answer with “!{0} submit t t f”. You can also say “!{0} a” etc. to toggle a specific variable and “!{0} submit” to submit the current state.";
 #pragma warning restore 414
 
     KMSelectable[] ProcessTwitchCommand(string command)
@@ -250,5 +245,15 @@ public class SuperlogicModule : MonoBehaviour
         if (values.Length != _numVariables)
             return null;
         return Enumerable.Range(0, _numVariables).Where(ix => values[ix] != _selected[ix]).Select(ix => Buttons[ix]).Concat(new[] { SubmitButton }).ToArray();
+    }
+
+    IEnumerator TwitchHandleForcedSolve()
+    {
+        yield return null;
+        foreach (var btn in Enumerable.Range(0, _numVariables).Where(ix => ((_solution & (1 << ix)) != 0) != _selected[ix]).Select(ix => Buttons[ix]).Concat(new[] { SubmitButton }))
+        {
+            btn.OnInteract();
+            yield return new WaitForSeconds(.2f);
+        }
     }
 }
