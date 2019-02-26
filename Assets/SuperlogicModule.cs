@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -59,12 +58,6 @@ public class SuperlogicModule : MonoBehaviour
         _moduleId = _moduleIdCounter++;
         _numVariables = 3;// Rnd.Range(3, 5);
         Container.transform.Find("Submit-fake").gameObject.SetActive(false);
-
-        for (int i = _numVariables; i < 4; i++)
-        {
-            Buttons[i].gameObject.SetActive(false);
-            TmplTexts[i].SetActive(false);
-        }
 
         _selected = new bool[_numVariables];
         _unselectableButtons = new List<GameObject>[_numVariables];
@@ -128,9 +121,9 @@ public class SuperlogicModule : MonoBehaviour
             Destroy(btn);
         SetTextures();
 
-        var scale = Mathf.Min((_numVariables == 3 ? .5f : .47f), (_numVariables == 3 ? .15f : .1625f) / maxAdvance);
+        var scale = Mathf.Min(.5f, .15f / maxAdvance);
         Container.transform.localScale = new Vector3(scale, scale, scale);
-        Container.transform.localPosition = new Vector3(_numVariables == 3 ? -.075f : -.08f, .01501f, _numVariables == 3 ? .02f : .03f);
+        Container.transform.localPosition = new Vector3(-.075f, .01501f, .02f);
     }
 
     private bool SubmitButtonHandler()
