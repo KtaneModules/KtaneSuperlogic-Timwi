@@ -242,7 +242,6 @@ public class SuperlogicModule : MonoBehaviour
 
     IEnumerator TwitchHandleForcedSolve()
     {
-        yield return null;
         foreach (var btn in Enumerable.Range(0, _numVariables).Where(ix => ((_solution & (1 << ix)) != 0) != _selected[ix]).Select(ix => Buttons[ix]).Concat(new[] { SubmitButton }))
         {
             btn.OnInteract();
